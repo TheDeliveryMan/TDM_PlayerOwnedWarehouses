@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<content id="TDM_POW" name="POW - Player Owned Warehouses" description="Workaround to get Trade Station functionality for player stations." author="The Delivery Man" version="1" date="2019-01-05" save="0" enabled="1">
+<text language="44" name="POW - Player Owned Warehouses" description="Workaround to get Trade Station functionality for player stations." author="The Delivery Man" />
+</content>

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<aiscript name="tdm.order.pow.tradeware.config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd" version="0">
+  <order id="TDM_Order_POW_TradewareConfig" name="POW Tradeware Config" description="Used to add tradewares to player stations." category="trade" infinite="true">
+    <params>
+      <param name="warehouse" required="true" default="null" type="object" text="Warehouse" comment="Warehouse. Object">
+        <input_param name="class" value="[class.station]"/>
+        <input_param name="owner" value="this.ship.owner"/>
+      </param>
+      <param name="ware" required="true" type="ware" text="Tradeware" comment="Ware to trade. What do we want to trade?">
+        <input_param name="cancarry" value="$warehouse.station"/>
+        <!-- <input_param name="cancarry" value="this.ship"/> -->
+      </param>
+      <param name="buy" required="false" default="true" type="bool" advanced="false" text="Buy" comment="..." />
+      <param name="sell" required="false" default="true" type="bool" advanced="false" text="Sell" comment="..." />
+      <param name="lockavgprice" required="false" default="false" type="bool" advanced="false" text="Lock average price" comment="..." />
+      
+    </params>
+    <skill min="0"/>
+    <requires>
+      <match shiptype="shiptype.lasertower" negate="true"/>
+    </requires>
+  </order>
+  <interrupts>
+    <handler ref="SectorChangeHandler"/>
+    <handler ref="AttackHandler" />
+    <handler ref="MissileLockHandler" />
+    <handler ref="ScannedHandler" />
+    <handler ref="InspectedHandler"/>
+    <handler ref="FoundAbandonedHandler"/>
+    <handler ref="ResupplyHandler" />
+    <handler ref="JobRemoveRequestHandler" />
+    <handler ref="TargetInvalidHandler"/>
+  </interrupts>
+  <init>
+    <set_order_syncpoint_reached order="this.ship.order"/>
+  </init>
+  <attention min="unknown">
+    <actions>
+
+      <set_value name="$logfile" exact="player.systemtime.{'%Y-%m-%d_%H'} + '_POW_TWConfig_' + this.ship.idcode"/>
+
+      
+      <set_value name="$remove" exact="not ($buy or $sell)"/>
+
+      <debug_to_file name="$logfile" directory="'TDM'" text="player.age/1h + ': ________________________________________________'" output="false" append="true" /> 
+      <debug_to_file name="$logfile" directory="'TDM'" text="player.age/1h + ': Tradeware Config for %1 (%2)'.[$warehouse.knownname, $warehouse.sector.knownname]" output="false" append="true" /> 
+
+      <do_if value="$remove">
+        <do_if value="$warehouse.tradewares.{$ware}.exists">
+          <debug_to_file name="$logfile" directory="'TDM'" text="player.age/1h + ': removing tradeware %1'.[$ware.name]" output="false" append="true" /> 
+          <remove_tradeware object="$warehouse" ware="$ware" />
+        </do_if>
+      </do_if>
+      <do_elseif value="$warehouse.tradewares.{$ware}.exists">
+        <debug_to_file name="$logfile" directory="'TDM'" text="player.age/1h + ': updating tradeware %1'.[$ware.name]" output="false" append="true" /> 
+        <debug_to_file name="$logfile" directory="'TDM'" text="player.age/1h + ': buy %1'.[$buy]" output="false" append="true" /> 
+        <debug_to_file name="$logfile" directory="'TDM'" text="player.age/1h + ': sell %1'.[$sell]" output="false" append="true" /> 
+        <debug_to_file name="$logfile" directory="'TDM'" text="player.age/1h + ': lock avg price %1'.[$lockavgprice]" output="false" append="true" /> 
+        <remove_tradeware object="$warehouse" ware="$ware" />
+        <add_tradeware object="$warehouse" ware="$ware" allowbuy="$buy" allowsell="$sell" lockavgprice="$lockavgprice"/>
+      </do_elseif>
+      <do_else>
+        <debug_to_file name="$logfile" directory="'TDM'" text="player.age/1h + ': adding tradeware %1'.[$ware.name]" output="false" append="true" /> 
+        <debug_to_file name="$logfile" directory="'TDM'" text="player.age/1h + ': buy %1'.[$buy]" output="false" append="true" /> 
+        <debug_to_file name="$logfile" directory="'TDM'" text="player.age/1h + ': sell %1'.[$sell]" output="false" append="true" /> 
+        <debug_to_file name="$logfile" directory="'TDM'" text="player.age/1h + ': lock avg price %1'.[$lockavgprice]" output="false" append="true" /> 
+        <add_tradeware object="$warehouse" ware="$ware" allowbuy="$buy" allowsell="$sell" lockavgprice="$lockavgprice"/>
+      </do_else>
+      
+
+      <debug_to_file name="$logfile" directory="'TDM'" text="player.age/1h + ': ________________________________________________'" output="false" append="true" /> 
+
+
+      <!-- Idle for a while -->
+      <set_value name="$maxidletime" exact="(70 - 4 * this.ship.pilot.skill.morale)s"/>
+      <debug_to_file name="$logfile" directory="'TDM'" text="player.age/1h + ': %1 : %2'.['max idletime', $maxidletime]" output="false" append="true" /> 
+      <run_script name="'move.idle'" >
+        <param name="Min" value="5s" />
+        <param name="Max" value="$maxidletime" />
+      </run_script>
+      
+      <!-- <create_order object="this.object" id="'DockAt'" immediate="true" default="true"> -->
+      <create_order object="this.object" id="'DockAt'" immediate="false" default="true">
+        <param name="destination" value="$warehouse"/>
+      </create_order>
+
+    </actions>
+  </attention>
+</aiscript>
